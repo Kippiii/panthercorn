@@ -11,9 +11,11 @@ from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, rop
 
 pointer_re = r"""0x[0-9a-f]*"""
 
+
 def end_prog(flag: str) -> None:
     print(f"Flag is {flag}")
     exit(0)
+
 
 def dispatch_exploits(file_path: str) -> None:
     """
@@ -51,7 +53,7 @@ def dispatch_exploits(file_path: str) -> None:
                     end_prog(flag)
 
             # ret2libc
-            output = process(file_path).recv()
+            output = process([file_path]).recv()
             comp = re.compile(pointer_re)
             if comp.match(output) is not None:
                 flag = ret2libc(vuln)
@@ -65,3 +67,4 @@ def dispatch_exploits(file_path: str) -> None:
                     end_prog(flag)
 
         # Nick (Format)
+        
