@@ -7,7 +7,10 @@ from pwn import ELF, process
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
+# Imports exploits for StackOverflows
 from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite
+# Imports exploits for FormatStrings
+from exploits import stack_leak, libc_leak, write_prim, got_overwrite
 
 pointer_re = r"""0x[0-9a-f]*"""
 
@@ -65,6 +68,32 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = ropwrite(vuln)
                 if flag is not None:
                     end_prog(flag)
+                    
+        elif isinstance(vuln, FormatString):
+            vuln_printfs = ['printf', 'fprintf', 'sprintf', 'vprintf', 'snprintf', 'vsnprintf', 'vfprintf']
+            # GOT Overwrite
+            if 'win' in syms:
+                flag = got_overwrite(vuln)
+                if flag is not None:
+                    end_prog(flag)
+
+            # Stack Leak
+            elif 'fopen' in syms:
+                flag = stack_leak(vuln)
+                if flag is not None:
+                    end_prog(flag)
+                    
+            elif 'pwnme' in syms:
+                flag = None
+            
+            elif vuln_printfs in syms:
+                flag = None
+            
+            else:
+                pass  # TODO
+                
+        else:
+            pass  # TODO
 
         # Nick (Format)
         
