@@ -1,2 +1,2 @@
-from FormatString import FormatString, get_format_string_vulns
-from StackOverflow import StackOverflow, get_stack_overflow_vulns
+from vulnerabilities.FormatString import FormatString, get_format_string_vulns
+from vulnerabilities.StackOverflow import StackOverflow, get_stack_overflow_vulns
