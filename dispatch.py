@@ -7,7 +7,7 @@ from pwn import ELF, process
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim
 
 pointer_re = r"""0x[0-9a-f]*"""
 
@@ -67,6 +67,6 @@ def dispatch_exploits(file_path: str) -> None:
                     end_prog(flag)
 
         else:
-            flag = stack_leak(vuln)
+            flag = write_prim(vuln)
             end_prog(flag)
         
