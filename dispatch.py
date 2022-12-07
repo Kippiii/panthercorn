@@ -3,7 +3,7 @@ Determines which exploits to call
 """
 
 import re
-from pwn import ELF, process
+from pwn import ELF, process, ROP
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
@@ -82,13 +82,17 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = stack_leak(vuln)
                 if flag is not None:
                     end_prog(flag)
-                    
+            
+            # Write Primitive
             elif 'pwnme' in syms:
+                flag = write_prim(vuln)
+                if flag is not None:
+                    end_prog(flag)
+
+            elif vuln_printfs in syms and :
                 flag = None
-            
-            elif vuln_printfs in syms:
-                flag = None
-            
+                libc = ELF('/usr/lib/x86_64-linux-gnu/libc-2.32.so')
+                r = ROP(libc)
             else:
                 pass  # TODO
                 
