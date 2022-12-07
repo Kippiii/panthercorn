@@ -11,8 +11,7 @@ from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns
 from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite
 # Imports exploits for FormatStrings
 from exploits import stack_leak, libc_leak, write_prim, got_overwrite
-
-pointer_re = r"""0x[0-9a-f]*"""
+import config as c
 
 
 def end_prog(flag: str) -> None:
@@ -57,7 +56,7 @@ def dispatch_exploits(file_path: str) -> None:
 
             # ret2libc
             output = process([file_path]).recv()
-            comp = re.compile(pointer_re)
+            comp = re.compile(c.pointer_re)
             if comp.match(output) is not None:
                 flag = ret2libc(vuln)
                 if flag is not None:
@@ -70,7 +69,6 @@ def dispatch_exploits(file_path: str) -> None:
                     end_prog(flag)
                     
         elif isinstance(vuln, FormatString):
-            vuln_printfs = ['printf', 'fprintf', 'sprintf', 'vprintf', 'snprintf', 'vsnprintf', 'vfprintf']
             # GOT Overwrite
             if 'win' in syms:
                 flag = got_overwrite(vuln)
@@ -89,12 +87,13 @@ def dispatch_exploits(file_path: str) -> None:
                 if flag is not None:
                     end_prog(flag)
 
-            elif vuln_printfs in syms and :
+            # TODO
+            elif c.vuln_printfs in syms and True:
                 flag = None
-                libc = ELF('/usr/lib/x86_64-linux-gnu/libc-2.32.so')
+                libc = ELF(c.libc_path)
                 r = ROP(libc)
             else:
-                pass  # TODO
+                pass
                 
         else:
             pass  # TODO
