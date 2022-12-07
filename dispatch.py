@@ -7,7 +7,7 @@ from pwn import ELF, process
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak
 
 pointer_re = r"""0x[0-9a-f]*"""
 
@@ -24,7 +24,7 @@ def dispatch_exploits(file_path: str) -> None:
     syms = ELF(file_path).symbols.keys()
 
     # Get all vulnerabilites
-    vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns() + get_stack_overflow_vulns()
+    vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns()
 
     for vuln in vulns:
         if isinstance(vuln, StackOverflow):
@@ -66,5 +66,7 @@ def dispatch_exploits(file_path: str) -> None:
                 if flag is not None:
                     end_prog(flag)
 
-        # Nick (Format)
+        else:
+            flag = stack_leak(vuln)
+            end_prog(flag)
         
