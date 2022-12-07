@@ -12,4 +12,14 @@ class FormatString:
 
 
 def get_format_string_vulns() -> List[FormatString]:
-    return []  # TODO
+    if 'fopen' in test:
+        print("fopen")
+
+    elif 'pwnme' in test:
+        print("Write_prim")
+     
+    elif 'putchar' in test:
+        print("got_overwrite")
+    
+    else:
+        print("libc leak")    
