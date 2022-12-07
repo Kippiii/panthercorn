@@ -14,7 +14,6 @@ from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, rop
 from exploits import stack_leak, libc_leak, write_prim, got_overwrite
 import config as c
 
-
 def get_overflow_size(binary, register='rsp', size_of_input=5000) -> int:
     """
     Returns -1 if nothing is found in the core file for the given register.
