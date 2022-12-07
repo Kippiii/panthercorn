@@ -24,7 +24,7 @@ def dispatch_exploits(file_path: str) -> None:
     syms = ELF(file_path).symbols.keys()
 
     # Get all vulnerabilites
-    vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns()
+    vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
 
     for vuln in vulns:
         if isinstance(vuln, StackOverflow):
@@ -53,7 +53,7 @@ def dispatch_exploits(file_path: str) -> None:
                     end_prog(flag)
 
             # ret2libc
-            output = process([file_path]).recv()
+            output = process([file_path]).recvS()
             comp = re.compile(pointer_re)
             if comp.match(output) is not None:
                 flag = ret2libc(vuln)
