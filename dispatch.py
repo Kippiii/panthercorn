@@ -55,7 +55,7 @@ def dispatch_exploits(file_path: str) -> None:
             # ret2libc
             output = process([file_path]).recvS()
             comp = re.compile(pointer_re)
-            if comp.match(output) is not None:
+            if comp.search(output) is not None:
                 flag = ret2libc(vuln)
                 if flag is not None:
                     end_prog(flag)
