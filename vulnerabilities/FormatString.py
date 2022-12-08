@@ -1,13 +1,14 @@
 """
-Deals with finding format string attack vulnerabilites
+Deals with finding format string attack vulnerabilities
 """
 
 from typing import List
 import re
 from pwn import *
+from config import *
 
-
-POINTER_RE = r"""0x([0-9A-F]+)"""
+# remove if unneeded
+# POINTER_RE = r"""0x([0-9A-F]+)"""
 
 
 class FormatString:
@@ -21,7 +22,7 @@ class FormatString:
 
 def get_format_string_vulns(bin_path: str) -> List[FormatString]:
     vulns = []
-    p = process(bin_path)
+    p = process([bin_path])
     num_payloads = 0
     max_checks = 5
     while p.poll() is None and num_payloads <= max_checks:
@@ -30,7 +31,8 @@ def get_format_string_vulns(bin_path: str) -> List[FormatString]:
                 out = p.recvS()
             except EOFError:
                 continue
-            comp = re.compile(POINTER_RE)
+            # comp = re.compile(POINTER_RE)
+            comp = re.compile(pointer_re)
             srch = comp.search(out)
             if srch:
                 vulns.append(FormatString(b"%p.%p.%p\n" * (num_payloads - 1), bin_path))
