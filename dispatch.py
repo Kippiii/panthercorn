@@ -26,12 +26,6 @@ def dispatch_exploits(file_path: str) -> None:
     Calls exploits based on possible ones
     """
     syms = ELF(file_path).symbols.keys()
-    
-    # Since the offset will return -1 if nothing is found,
-    # these offsets can be used in conditional checks.
-    rsp_offset = get_overflow_size(file_path)
-    rbp_offset = get_overflow_size(file_path, 'rbp')
-    rip_offset = get_overflow_size(file_path, 'rip')
 
     # Get all vulnerabilities
     vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)

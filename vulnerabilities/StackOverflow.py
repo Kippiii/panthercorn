@@ -44,7 +44,7 @@ def get_stack_overflow_vulns(bin_path) -> List[StackOverflow]:
             except EOFError:
                 continue
         else:
-            padding = get_overflow_size(bin_path, p)
+            padding = get_overflow_size(p)
             if padding == -1:
                 continue
 
