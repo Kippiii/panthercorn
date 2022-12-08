@@ -22,23 +22,27 @@ class FormatString:
 
 def get_format_string_vulns(bin_path: str) -> List[FormatString]:
     vulns = []
-    p = process([bin_path])
-    num_payloads = 0
-    max_checks = 5
-    while p.poll() is None and num_payloads <= max_checks:
-        if p.can_recv(timeout=1):
-            try:
-                out = p.recvS()
-            except EOFError:
-                continue
-            # comp = re.compile(POINTER_RE)
-            comp = re.compile(pointer_re)
-            srch = comp.search(out)
-            if srch:
-                vulns.append(FormatString(b"%p.%p.%p\n" * (num_payloads - 1), bin_path))
-        else:
-            num_payloads += 1
-            p.send(b"%p.%p.%p\n")
-    p.kill()
-
+    try:
+        p = process([bin_path])
+        num_payloads = 0
+        max_checks = 5
+        while p.poll() is None and num_payloads <= max_checks:
+            if p.can_recv(timeout=1):
+                try:
+                    out = p.recvS()
+                except EOFError:
+                    continue
+                # comp = re.compile(POINTER_RE)
+                comp = re.compile(pointer_re)
+                srch = comp.search(out)
+                if srch:
+                    vulns.append(FormatString(b"%p.%p.%p\n" * (num_payloads - 1), bin_path))
+            else:
+                num_payloads += 1
+                p.send(b"%p.%p.%p\n")
+        p.kill()
+    except Exception as ex:
+        print(f"Exception {ex} occurred")
+    else:
+        return vulns
     return vulns

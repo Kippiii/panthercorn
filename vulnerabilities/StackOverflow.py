@@ -33,7 +33,7 @@ def get_overflow_size(p, register='rsp', size_of_input=5000) -> int:
     return offset
 
 
-def get_stack_overflow_vulns(bin_path) -> List[StackOverflow]:
+def get_stack_overflow_vulns(bin_path: str) -> List[StackOverflow]:
     vulns = []
     p = process(bin_path)
 
@@ -51,5 +51,3 @@ def get_stack_overflow_vulns(bin_path) -> List[StackOverflow]:
             vulns.append(StackOverflow(b"A" * padding, bin_path))
 
     return vulns
-
-
