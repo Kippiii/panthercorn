@@ -30,7 +30,10 @@ def get_overflow_size(p, register='rsp', size_of_input=5000) -> int:
     core = p.corefile
     offset = cyclic_find(core.read(core.registers[register], 8), n=8)
     os.remove(core.file.name)
-    return offset
+    if offset < 1:
+        return False
+    else:
+        return offset
 
 
 def get_stack_overflow_vulns(bin_path: str) -> List[StackOverflow]:

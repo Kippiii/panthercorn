@@ -9,6 +9,11 @@ from typing import List, Union
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
 from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak, ret2win_args
 from config import *
+import angr
+
+# For some reason Falco needs this to stop PyCharm from complaining so comment out if it isn't
+p64 = pwnlib.util.packing.p64
+
 # Unsure if needed still to get offsets in this module
 from vulnerabilities.StackOverflow import get_overflow_size
 
@@ -35,7 +40,22 @@ def dispatch_exploits(file_path: str) -> None:
     # rip_offset = get_overflow_size(file_path, 'rip')
 
     # Get all vulnerabilities
-    vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
+    try:
+        vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
+    except Exception as ex:
+        print(f"Exception {ex} occurred")
+    else:
+        e = ELF(file_path)
+        r = ROP([file_path])
+        system = p64(e.sym['system'])
+        bin_sh = e.search('/bin/sh')
+        cat_flag = e.search('cat flag.txt')
+        if len(list(bin_sh)) > 0 or len(list(cat_flag)) > 0:
+            pop_rdi = p64(r.find_gadget(['pop rdi', 'ret'])[0])
+            if pop_rdi:
+                payload = b''
+        # Do something here if breaks
+        vulns = []
 
     for vuln in vulns:
         if isinstance(vuln, StackOverflow):
