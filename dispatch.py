@@ -7,7 +7,7 @@ from pwn import ELF, process, ROP
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak, ret2win_args
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak, ret2win_args, try_angr
 from config import *
 # Unsure if needed still to get offsets in this module
 from vulnerabilities.StackOverflow import get_overflow_size
@@ -28,7 +28,9 @@ def dispatch_exploits(file_path: str) -> None:
     syms = ELF(file_path).symbols.keys()
 
     # Get all vulnerabilities
-    vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
+    vulns = []
+    while len(vulns) == 0:
+        vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
 
     for vuln in vulns:
         if isinstance(vuln, StackOverflow):
@@ -110,4 +112,6 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = libc_leak(vuln1, vuln2)
                 if flag is not None:
                     end_prog(flag)
+
+    try_angr(file_path)
         

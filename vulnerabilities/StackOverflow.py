@@ -52,6 +52,7 @@ def get_stack_overflow_vulns(bin_path) -> List[StackOverflow]:
                 vulns.append(StackOverflow(b"A" * padding, bin_path))
 
         return vulns
-    except:
+    except Exception as e:
+        print(e)
         return []
 
