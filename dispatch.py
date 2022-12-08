@@ -70,7 +70,7 @@ def dispatch_exploits(file_path: str) -> None:
                     end_prog(flag)
 
             # ropwrite
-            if 'pwnme' in syms:
+            if 'system' in syms:
                 flag = ropwrite(vuln)
                 if flag is not None:
                     end_prog(flag)
@@ -94,11 +94,6 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = write_prim(vuln)
                 if flag is not None:
                     end_prog(flag)
-                    
-            elif vuln_printfs in syms and True:
-                flag = None
-                libc = ELF(libc_path)
-                r = ROP([libc])
 
             else:
                 pass  # TODO
