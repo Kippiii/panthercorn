@@ -7,7 +7,7 @@ from pwn import ELF, process
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak, ret2win_args
 
 pointer_re = r"""0x[0-9a-f]*"""
 
@@ -31,6 +31,9 @@ def dispatch_exploits(file_path: str) -> None:
             # ret2win
             if 'win' in syms:
                 flag = ret2win(vuln)
+                if flag is not None:
+                    end_prog(flag)
+                flag = ret2win_args(vuln)
                 if flag is not None:
                     end_prog(flag)
 
