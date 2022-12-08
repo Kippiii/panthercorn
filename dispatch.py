@@ -7,7 +7,7 @@ from pwn import ELF, process, ROP
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak, ret2win_args
 from config import *
 # Unsure if needed still to get offsets in this module
 from vulnerabilities.StackOverflow import get_overflow_size
@@ -43,6 +43,9 @@ def dispatch_exploits(file_path: str) -> None:
                 flag = ret2win(vuln)
                 if flag is not None:
                     end_prog(flag)
+                flag = ret2win_args(vuln)
+                if flag is not None:
+                    end_prog(flag)
 
             # ret2system
             if 'system' in syms:
@@ -65,7 +68,7 @@ def dispatch_exploits(file_path: str) -> None:
             # ret2libc
             output = process([file_path]).recvS()
             comp = re.compile(pointer_re)
-            if comp.match(output) is not None:
+            if comp.search(output) is not None:
                 flag = ret2libc(vuln)
                 if flag is not None:
                     end_prog(flag)
