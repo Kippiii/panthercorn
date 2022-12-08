@@ -5,5 +5,4 @@ from dispatch import dispatch_exploits
 
 logging.getLogger('pwnlib').setLevel(logging.ERROR)
 
-# dispatch_exploits(args.BIN)
-dispatch_exploits('/home/falco/Desktop/SWRE/bins/bin-ret2system-0')
+dispatch_exploits(args.BIN)

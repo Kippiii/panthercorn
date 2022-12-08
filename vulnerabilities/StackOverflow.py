@@ -34,21 +34,24 @@ def get_overflow_size(p, register='rsp', size_of_input=5000) -> int:
 
 
 def get_stack_overflow_vulns(bin_path) -> List[StackOverflow]:
-    vulns = []
-    p = process(bin_path)
+    try:
+        vulns = []
+        p = process(bin_path)
 
-    while p.poll() is None:
-        if p.can_recv(timeout=1):
-            try:
-                p.recv()
-            except EOFError:
-                continue
-        else:
-            padding = get_overflow_size(p)
-            if padding == -1:
-                continue
+        while p.poll() is None:
+            if p.can_recv(timeout=1):
+                try:
+                    p.recv()
+                except EOFError:
+                    continue
+            else:
+                padding = get_overflow_size(p)
+                if padding == -1:
+                    continue
 
-            vulns.append(StackOverflow(b"A" * padding, bin_path))
+                vulns.append(StackOverflow(b"A" * padding, bin_path))
 
-    return vulns
+        return vulns
+    except:
+        return []
 
