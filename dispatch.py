@@ -7,7 +7,7 @@ from pwn import ELF, process
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite
+from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak
 
 pointer_re = r"""0x[0-9a-f]*"""
 
@@ -66,7 +66,35 @@ def dispatch_exploits(file_path: str) -> None:
                 if flag is not None:
                     end_prog(flag)
 
+        elif isinstance(vuln, FormatString):
+            vuln_printfs = ['printf', 'fprintf', 'sprintf', 'vprintf', 'snprintf', 'vsnprintf', 'vfprintf']
+            # GOT Overwrite
+            if 'win' in syms:
+                flag = got_overwrite(vuln)
+                if flag is not None:
+                    end_prog(flag)
+
+            # Stack Leak
+            elif 'fopen' in syms:
+                flag = stack_leak(vuln)
+                if flag is not None:
+                    end_prog(flag)
+            
+            # Write Primitive
+            elif 'pwnme' in syms:
+                flag = write_prim(vuln)
+                if flag is not None:
+                    end_prog(flag)
+
+            else:
+                pass  # TODO
+                
         else:
-            flag = write_prim(vuln)
-            end_prog(flag)
+            pass  # TODO
+    for vuln1 in vulns:
+        for vuln2 in vulns:
+            if isinstance(vuln1, FormatString) and isinstance(vuln2, StackOverflow):
+                flag = libc_leak(vuln1, vuln2)
+                if flag is not None:
+                    end_prog(flag)
         
