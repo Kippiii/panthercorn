@@ -5,20 +5,21 @@ Deals with finding stack overflow vulnerabilites
 from typing import List
 from pwn import *
 import os
+
+# re isn't used. Remove later if that doesn't change.
 import re
 
-POINTER_RE = r"""0x([0-9A-F]+)"""
 
 class StackOverflow:
     payload_start: bytes
     bin_path: str
 
-    def __init__(self, payload_start: int, bin_path: str):
+    def __init__(self, payload_start: bytes, bin_path: str):
         self.bin_path = bin_path
         self.payload_start = payload_start
 
 
-def get_overflow_size(bin_path, p, register='rsp', size_of_input=5000) -> int:
+def get_overflow_size(p, register='rsp', size_of_input=5000) -> int:
     """
     Returns -1 if nothing is found in the core file for the given register.
     Modify size_of_input to try larger/smaller buffer.
@@ -36,18 +37,18 @@ def get_stack_overflow_vulns(bin_path) -> List[StackOverflow]:
     vulns = []
     p = process(bin_path)
 
-    while p.poll() == None:
+    while p.poll() is None:
         if p.can_recv(timeout=1):
-                try:
-                    p.recv()
-                except EOFError:
-                    continue
+            try:
+                p.recv()
+            except EOFError:
+                continue
         else:
             padding = get_overflow_size(bin_path, p)
             if padding == -1:
                 continue
 
-            vulns.append(StackOverflow(b"A"*padding, bin_path))
+            vulns.append(StackOverflow(b"A" * padding, bin_path))
 
     return vulns
 

